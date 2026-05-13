@@ -39,10 +39,10 @@ remote -->> compile: 下发可执行文件到编译客户端，并断开连接
 go env -w GOSUMDB=off
 
 # 安装编译客户端
-go install github.com/dobyte/closed-source-solution/compile@latest
+go install github.com/dobyte/closed-source-solution/compile@latest -o closed-source-solution-compile
 
 # 安装编译服务端
-go install github.com/dobyte/closed-source-solution/remote@latest
+go install github.com/dobyte/closed-source-solution/remote@latest -o closed-source-solution-remote
 
 go env -w GOSUMDB=on
 ```
