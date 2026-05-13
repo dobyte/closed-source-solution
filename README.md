@@ -30,7 +30,6 @@ remote -->> compile: 下发可执行文件到编译客户端，并断开连接
 * 支持服务端编译错误的返回，客户端可根据错误信息进行调试。
 
 
-
 ### 3.安装
 
 > 使用go install进行安装需要首先安装go 1.25+环境
@@ -39,13 +38,15 @@ remote -->> compile: 下发可执行文件到编译客户端，并断开连接
 go env -w GOSUMDB=off
 
 # 安装编译客户端
-go install github.com/dobyte/closed-source-solution/compile@latest -o closed-source-solution-compile
+go install github.com/dobyte/closed-source-solution/compile@latest
 
 # 安装编译服务端
-go install github.com/dobyte/closed-source-solution/remote@latest -o closed-source-solution-remote
+go install github.com/dobyte/closed-source-solution/remote@latest
 
 go env -w GOSUMDB=on
 ```
+
+> 安装完成后，将compile和remote分别改为closed-source-solution-compile和closed-source-solution-remote，并添加到环境变量中，即可在任何地方使用。
 
 ### 4.remote用法
 
