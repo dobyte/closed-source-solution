@@ -32,5 +32,5 @@ jobs:
           goversion: "https://dl.google.com/go/go1.25.0.linux-amd64.tar.gz"
           multi_binaries: true
           binary_name: "closed-source-solution"
-          project_path: ./compile ./remote
+          project_path: "./compile ./remote"
           extra_files: LICENSE README.md
