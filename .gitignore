@@ -1,0 +1,34 @@
+# OS general
+*/.DS_Store
+
+# Docker container's temp data
+docker/*/
+
+# Test data
+testdata/log/
+
+# Develop tools
+.vscode
+.idea/
+.qoder
+
+# Go workspace
+go.work
+go.work.sum
+
+# log file
+*.log
+*.log_lock
+*.log_symlink
+
+# log gzip file
+*.gz
+
+# goland idea
+.idea
+
+# project run dir
+*run/
+
+# executable files
+*.exe
