@@ -26,6 +26,7 @@ type CompileCommand struct {
 	GOARCH string `json:"goarch"` // 目标架构
 	Output string `json:"output"` // 输出文件名
 	Shell  string `json:"shell"`  // 编译前执行的shell脚本
+	Tags   string `json:"tags"`   // 构建标签
 	Size   int64  `json:"size"`   // 压缩文件大小
 }
 

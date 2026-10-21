@@ -39,9 +39,10 @@ func GoEnv() ([]string, error) {
 // GoBuild 编译go项目
 // tiny 为 true 时附加精简参数（-trimpath -buildvcs=false -ldflags="-s -w -buildid="）
 // garble 为 true 时使用 garble 进行代码混淆编译
+// tags 非空时通过 -tags 指定构建标签
 // 返回错误
 // 如果编译成功，返回 nil
-func GoBuild(dir string, cgo bool, tiny bool, garble bool, goos string, goarch string, output string) error {
+func GoBuild(dir string, cgo bool, tiny bool, garble bool, goos string, goarch string, output string, tags string) error {
 	stderr := &bytes.Buffer{}
 
 	name, args := "go", []string{"build"}
@@ -51,6 +52,10 @@ func GoBuild(dir string, cgo bool, tiny bool, garble bool, goos string, goarch s
 
 	if tiny {
 		args = append(args, "-trimpath", "-buildvcs=false", "-ldflags=-s -w -buildid=")
+	}
+
+	if tags != "" {
+		args = append(args, "-tags="+tags)
 	}
 
 	args = append(args, "-o", output, ".")

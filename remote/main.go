@@ -180,10 +180,15 @@ func main() {
 										tool = "garble"
 									}
 
+									tagsArg := ""
+									if cmd.Tags != "" {
+										tagsArg = " -tags=" + cmd.Tags
+									}
+
 									if cmd.CGO {
-										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=1 GOOS=%s GOARCH=%s %s build -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, cmd.Output, dir)
+										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=1 GOOS=%s GOARCH=%s %s build%s -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, tagsArg, cmd.Output, dir)
 									} else {
-										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=0 GOOS=%s GOARCH=%s %s build -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, cmd.Output, dir)
+										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=0 GOOS=%s GOARCH=%s %s build%s -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, tagsArg, cmd.Output, dir)
 									}
 
 									buf = &bytes.Buffer{}
@@ -232,7 +237,7 @@ func main() {
 										}
 									}
 
-									if err = exec.GoBuild(dir, cmd.CGO, tiny, garble, cmd.GOOS, cmd.GOARCH, cmd.Output); err != nil {
+									if err = exec.GoBuild(dir, cmd.CGO, tiny, garble, cmd.GOOS, cmd.GOARCH, cmd.Output, cmd.Tags); err != nil {
 										log.Printf("执行编译失败: cid = %d, %v\n", cid, err)
 										packet.WriteComplieError(conn, err)
 										return

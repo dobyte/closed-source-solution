@@ -118,6 +118,7 @@ GLOBAL OPTIONS:
    --output string, -o string  specify the output file name; default is main.exe on Windows, main on other platforms.
    --packages string           specify the path to the package to compile; default is current directory. (default: ".")
    --shell string              specify the shell to execute before compiling; default is empty.
+   --tags string               specify a comma-separated list of build tags to pass to go build; default is empty.
    --remote string             specify the remote server address
    --help, -h                  show help
 ```
@@ -129,6 +130,7 @@ GLOBAL OPTIONS:
 * `--output`：产物文件名，默认为 `main.exe`（Windows）或 `main`（其他平台）；仅支持文件名，不支持路径。
 * `--packages`：待编译的包路径，默认为当前目录；打包时会收集该目录下的 `go.mod`、`go.sum`、`*.go`、`*.sh`。
 * `--shell`：编译前在服务端执行的 shell 脚本，用于替换核心库等闭源处理，默认为空。
+* `--tags`：构建标签，多个标签用逗号分隔（如 `--tags "prod,enterprise"`），会以 `-tags=...` 传给 `go build`，默认为空。
 * `--remote`：编译服务端地址，必填。
 
 > 客户端等待服务端响应的最长空闲时间为 30 分钟，超时会中断并退出。
@@ -145,4 +147,7 @@ closed-source-solution-compile --remote 127.0.0.1:8080 --packages . -o main.exe
 # 3. 指定目标平台与编译前脚本
 closed-source-solution-compile --remote 127.0.0.1:8080 --packages . \
     --goos linux --goarch amd64 --shell replace.sh -o app
+
+# 4. 指定构建标签（等价于 go build -tags "prod,enterprise"）
+closed-source-solution-compile --remote 127.0.0.1:8080 --tags "prod,enterprise" -o app
 ```

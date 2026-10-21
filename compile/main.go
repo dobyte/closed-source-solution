@@ -59,6 +59,11 @@ func main() {
 				Usage: "specify the shell to execute before compiling; default is empty.",
 			},
 			&cli.StringFlag{
+				Name:  "tags",
+				Value: "",
+				Usage: "specify a comma-separated list of build tags to pass to go build; default is empty.",
+			},
+			&cli.StringFlag{
 				Name:     "remote",
 				Value:    "",
 				Required: true,
@@ -74,6 +79,7 @@ func main() {
 				packages = cmd.String("packages")
 				remote   = cmd.String("remote")
 				shell    = cmd.String("shell")
+				tags     = cmd.String("tags")
 				resp     *packet.ComplieResponse
 				file     *os.File
 				recv     float64
@@ -179,10 +185,15 @@ func main() {
 				}
 			}(conn)
 
+			tagsArg := ""
+			if tags != "" {
+				tagsArg = " -tags=" + tags
+			}
+
 			if cgo {
-				fmt.Printf("发送编译命令: CGO_ENABLED=1 GOOS=%s GOARCH=%s go build -o %s %s\n", goos, goarch, output, packages)
+				fmt.Printf("发送编译命令: CGO_ENABLED=1 GOOS=%s GOARCH=%s go build%s -o %s %s\n", goos, goarch, tagsArg, output, packages)
 			} else {
-				fmt.Printf("发送编译命令: CGO_ENABLED=0 GOOS=%s GOARCH=%s go build -o %s %s\n", goos, goarch, output, packages)
+				fmt.Printf("发送编译命令: CGO_ENABLED=0 GOOS=%s GOARCH=%s go build%s -o %s %s\n", goos, goarch, tagsArg, output, packages)
 			}
 
 			if err := packet.WriteCompileCommand(conn, &packet.CompileCommand{
@@ -192,6 +203,7 @@ func main() {
 				Output: output,
 				Size:   int64(buf.Len()),
 				Shell:  shell,
+				Tags:   tags,
 			}); err != nil {
 				fmt.Printf("发送命令失败: %s\n", err)
 				return nil
