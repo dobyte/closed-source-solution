@@ -180,15 +180,15 @@ func main() {
 										tool = "garble"
 									}
 
-									tagsArg := ""
+									tags := ""
 									if cmd.Tags != "" {
-										tagsArg = " -tags=" + cmd.Tags
+										tags = " -tags=" + cmd.Tags
 									}
 
 									if cmd.CGO {
-										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=1 GOOS=%s GOARCH=%s %s build%s -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, tagsArg, cmd.Output, dir)
+										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=1 GOOS=%s GOARCH=%s %s build%s -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, tags, cmd.Output, dir)
 									} else {
-										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=0 GOOS=%s GOARCH=%s %s build%s -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, tagsArg, cmd.Output, dir)
+										log.Printf("执行编译命令: cid = %d, CGO_ENABLED=0 GOOS=%s GOARCH=%s %s build%s -o %s %s\n", cid, cmd.GOOS, cmd.GOARCH, tool, tags, cmd.Output, dir)
 									}
 
 									buf = &bytes.Buffer{}
