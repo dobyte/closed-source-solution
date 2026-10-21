@@ -1,16 +1,25 @@
-name: Build and Release
+name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
-  releases-matrix:
-    name: Release Go Binary
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+  release-matrix:
+    name: Release ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: create-release
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,13 +33,43 @@ jobs:
             goos: windows
     steps:
       - uses: actions/checkout@v4
-      - uses: wangyoucao577/go-release-action@v1
+
+      - uses: actions/setup-go@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          goos: ${{ matrix.goos }}
-          goarch: ${{ matrix.goarch }}
-          goversion: "https://dl.google.com/go/go1.27.1.linux-amd64.tar.gz"
-          multi_binaries: true
-          binary_name: "closed-source-solution"
-          project_path: ./compile ./remote
-          extra_files: LICENSE README.md
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build and package
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          ext=""
+          if [ "${GOOS}" = "windows" ]; then
+            ext=".exe"
+          fi
+
+          name="closed-source-solution-${TAG}-${GOOS}-${GOARCH}"
+          mkdir -p "dist/${name}"
+
+          go build -trimpath -buildvcs=false -ldflags="-s -w -buildid=" \
+            -o "dist/${name}/closed-source-solution-compile${ext}" ./compile
+          go build -trimpath -buildvcs=false -ldflags="-s -w -buildid=" \
+            -o "dist/${name}/closed-source-solution-remote${ext}" ./remote
+
+          cp LICENSE README.md "dist/${name}/"
+
+          if [ "${GOOS}" = "windows" ]; then
+            (cd dist && zip -r "${name}.zip" "${name}")
+          else
+            (cd dist && tar -czf "${name}.tar.gz" "${name}")
+          fi
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/closed-source-solution-*
