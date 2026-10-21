@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 )
@@ -12,6 +13,7 @@ const (
 	defaultSizeBytes   = 4
 	defaultHeaderBytes = 1
 	defaultSharedSize  = 2 * 1024 * 1024
+	defaultMaxSize     = 8 * 1024 * 1024
 )
 
 const (
@@ -43,8 +45,12 @@ func ReadMessage(reader io.Reader) (int, []byte, error) {
 
 	size := binary.BigEndian.Uint32(buf)
 
-	if size == 0 {
-		return 0, nil, nil
+	if size <= defaultHeaderBytes {
+		return 0, nil, fmt.Errorf("消息长度非法: %d", size)
+	}
+
+	if size > defaultMaxSize {
+		return 0, nil, fmt.Errorf("消息长度超出限制: %d", size)
 	}
 
 	data := make([]byte, size)
@@ -140,7 +146,8 @@ func WriteComplieError(writer io.Writer, err error) {
 // 分片写入编译文件
 func WriteCompileFile(writer io.Writer, data []byte, callback ...func(uint8, float64)) error {
 	for s, n := 0, len(data); s < n; s += defaultSharedSize {
-		i := uint8(s/defaultSharedSize + 1)
+		// 序号固定落在 1~255，避免回绕为 0 与 CompileInfoHeader 冲突
+		i := uint8(s/defaultSharedSize%255 + 1)
 		v := data[s:min(s+defaultSharedSize, n)]
 
 		buf := &bytes.Buffer{}

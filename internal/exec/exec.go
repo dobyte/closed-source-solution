@@ -37,12 +37,25 @@ func GoEnv() ([]string, error) {
 }
 
 // GoBuild 编译go项目
+// tiny 为 true 时附加精简参数（-trimpath -buildvcs=false -ldflags="-s -w -buildid="）
+// garble 为 true 时使用 garble 进行代码混淆编译
 // 返回错误
 // 如果编译成功，返回 nil
-func GoBuild(dir string, cgo bool, goos string, goarch string, output string) error {
+func GoBuild(dir string, cgo bool, tiny bool, garble bool, goos string, goarch string, output string) error {
 	stderr := &bytes.Buffer{}
 
-	cmd := exec.Command("go", "build", "-o", output, ".")
+	name, args := "go", []string{"build"}
+	if garble {
+		name, args = "garble", []string{"-literals", "-tiny", "-seed=random", "build"}
+	}
+
+	if tiny {
+		args = append(args, "-trimpath", "-buildvcs=false", "-ldflags=-s -w -buildid=")
+	}
+
+	args = append(args, "-o", output, ".")
+
+	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "GOOS="+goos)
@@ -56,7 +69,11 @@ func GoBuild(dir string, cgo bool, goos string, goarch string, output string) er
 	}
 
 	if err := cmd.Run(); err != nil {
-		return errors.New(stderr.String())
+		if msg := stderr.String(); msg != "" {
+			return errors.New(msg)
+		}
+
+		return err
 	}
 
 	return nil
@@ -104,9 +121,14 @@ func ShellFixed(dir string, shell string) error {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("sed -i 's/\r$//' %s && chmod +x %s", shell, shell))
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
+	cmd.Stderr = stderr
 
 	if err := cmd.Run(); err != nil {
-		return errors.New(stderr.String())
+		if msg := stderr.String(); msg != "" {
+			return errors.New(msg)
+		}
+
+		return err
 	}
 
 	return nil
@@ -124,7 +146,11 @@ func ShellExec(dir string, shell string) error {
 	cmd.Stderr = stderr
 
 	if err := cmd.Run(); err != nil {
-		return errors.New(stderr.String())
+		if msg := stderr.String(); msg != "" {
+			return errors.New(msg)
+		}
+
+		return err
 	}
 
 	return nil

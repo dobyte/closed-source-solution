@@ -2,19 +2,23 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/dobyte/closed-source-solution/internal/archive"
 	"github.com/dobyte/closed-source-solution/internal/packet"
 	"github.com/dobyte/closed-source-solution/internal/utils"
 	"github.com/urfave/cli/v3"
 )
+
+// 等待服务端响应的最长空闲时间
+const readTimeout = 30 * time.Minute
 
 // 编译命令
 // closed-source-compiler --cgo=false --goos=windows --goarch=amd64 --output=main.exe --packages=. --remote=127.0.0.1:8080
@@ -87,7 +91,7 @@ func main() {
 
 			conn, err := net.Dial("tcp", remote)
 			if err != nil {
-				fmt.Printf("连接远端失败: %s\n", errors.Unwrap(errors.Unwrap(err)))
+				fmt.Printf("连接远端失败: %s\n", err)
 				return nil
 			}
 			defer conn.Close()
@@ -118,6 +122,11 @@ func main() {
 					case <-ctx.Done():
 						return
 					default:
+						if err := conn.SetReadDeadline(time.Now().Add(readTimeout)); err != nil {
+							fmt.Printf("设置读超时失败: %s\n", err)
+							return
+						}
+
 						header, data, err := packet.ReadMessage(conn)
 						if err != nil {
 							return
@@ -134,7 +143,16 @@ func main() {
 								return
 							}
 
+							if resp.Exec == "" || resp.Exec == "." || resp.Exec == ".." || filepath.Base(resp.Exec) != resp.Exec {
+								fmt.Printf("非法的输出文件名: %s\n", resp.Exec)
+								return
+							}
+
 							fmt.Printf("执行编译成功: %s %s\n", resp.Exec, utils.BytesToUnits(resp.Size))
+
+							if resp.Size <= 0 {
+								return
+							}
 
 							if file, err = os.OpenFile(resp.Exec, os.O_RDWR|os.O_CREATE|os.O_APPEND|os.O_TRUNC, 0644); err != nil {
 								fmt.Printf("创建文件失败: %s\n", err)

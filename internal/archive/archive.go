@@ -3,10 +3,18 @@ package archive
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+)
+
+const (
+	// 解压后的最大总大小
+	maxUnzipSize = 1 << 30
+	// 解压的最大文件数量
+	maxUnzipFiles = 100000
 )
 
 // Zip 压缩目录
@@ -93,6 +101,11 @@ func Unzip(buf *bytes.Buffer, dir string) error {
 		return err
 	}
 
+	var (
+		total int64
+		count int
+	)
+
 	for _, file := range zr.File {
 		if strings.Contains(file.Name, "..") || filepath.IsAbs(file.Name) {
 			continue
@@ -107,25 +120,45 @@ func Unzip(buf *bytes.Buffer, dir string) error {
 			continue
 		}
 
+		if count >= maxUnzipFiles {
+			return fmt.Errorf("解压文件数量超出限制: %d", maxUnzipFiles)
+		}
+		count++
+
 		if err = os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 			return err
+		}
+
+		remain := int64(maxUnzipSize) - total
+		if remain <= 0 {
+			return fmt.Errorf("解压文件总大小超出限制: %d", maxUnzipSize)
 		}
 
 		src, err := file.Open()
 		if err != nil {
 			return err
 		}
-		defer src.Close()
 
 		dst, err := os.Create(filePath)
 		if err != nil {
+			src.Close()
 			return err
 		}
-		defer dst.Close()
 
-		if _, err = io.Copy(dst, src); err != nil {
+		n, err := io.Copy(dst, io.LimitReader(src, remain+1))
+		src.Close()
+		dst.Close()
+
+		if err != nil {
 			return err
 		}
+
+		if n > remain {
+			os.Remove(filePath)
+			return fmt.Errorf("解压文件总大小超出限制: %d", maxUnzipSize)
+		}
+
+		total += n
 	}
 
 	return nil

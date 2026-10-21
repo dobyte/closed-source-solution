@@ -32,7 +32,7 @@ remote -->> compile: 下发可执行文件到编译客户端，并断开连接
 
 ### 3.安装
 
-> 使用go install进行安装需要首先安装go 1.25+环境
+> 使用go install进行安装需要首先安装go 1.27+环境
 
 ```bash
 go env -w GOSUMDB=off
@@ -59,8 +59,12 @@ USAGE:
 
 GLOBAL OPTIONS:
    --addr string  specify the address of the server (default: ":8080")
+   --tiny         specify whether to strip symbols and paths when compiling; it is disabled by default.
+   --garble       specify whether to enable garble obfuscation when compiling; it is disabled by default.
    --help, -h     show help
 ```
+
+> 开启 `--garble` 混淆编译前，需在编译服务端安装 garble：`go install mvdan.cc/garble@latest`。
 
 ### 5.compile用法
 
